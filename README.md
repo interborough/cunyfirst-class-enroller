@@ -1,12 +1,12 @@
 # CUNYFirst Class Enroller
-A Python script that automatically enrolls you in a class on CUNYFirst. 
+A Python script that automatically enrolls you into a class on CUNYFirst. 
 
 This script will check the status of a class (Open, Closed, or Wait Listed). If it is open or wait listed, the script will attempt to enroll you in the class. If the class is closed, the script will check every few seconds (you specify the exact amount of time between each check) to see if the status has changed. Once the script terminates (either having enrolled successfully or having encountered some sort of error) a sound effect of a bell ringing will play, letting you know that the program has taken some sort of action.
 
 I was only able to test this using Queens College's courses and using a Queens College CUNYFirst account, so I am not sure if it will work with other CUNY colleges. Seeing as the CUNYFirst system is used at all CUNY schools, however, there should be no issues using this script for other CUNY schools. 
 
 # Dependencies 
-For this program to function correctly you must have Python installed, along with the selenium and playsound libaries for Python. Additionally, you must install Google Chrome and ChromeDriver. 
+For this program to function correctly you must have Python installed, along with the selenium and playsound libaries for Python. Additionally, you must install Google Chrome and ChromeDriver (for ChromeDriver, simply move the .exe to a path that you will remember in the future).   
 
 - Download Python: https://www.python.org/downloads/
 - Install selenium: `pip install selenium`
@@ -16,7 +16,7 @@ For this program to function correctly you must have Python installed, along wit
 - Download ChromeDriver: https://chromedriver.chromium.org/
 
 # How to Use 
-- Download and install Python, along with the other relevant dependencies as outlined above. For ChromeDriver, simply move the .exe to a path that you will remember in the future (your Desktop, for example).  
+- Download and install Python, along with the other relevant dependencies as outlined above. 
 - On CUNYFirst, add the class you wish to monitor and enroll in to your Enrollment Shopping Cart. 
 - Download the zip file of the cunyfirst-class-enroller Github archive, and extract it to a folder. 
 - Run a terminal window in the folder that you extracted the zip file to, and enter `python enroller.py`.
