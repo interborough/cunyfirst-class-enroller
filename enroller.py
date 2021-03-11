@@ -1,8 +1,11 @@
 import sys
 import time
+import keyboard
+
 from playsound import playsound
+
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
@@ -13,7 +16,13 @@ bell_path = "audio\\bell.mp3"
 def main():
     # Get user input.
     driver_path, username, password, class_num, class_term, time_delay = get_user_input()
-    driver = webdriver.Chrome(driver_path)
+
+    try:
+        driver = webdriver.Chrome(driver_path)
+    except WebDriverException:
+        print("Invalid Chromedriver.exe path! Please double check the location of your Chromedriver.exe, "
+              "and try again.")
+        exit_routine()
 
     # Go to Google and search for CUNYFirst. CUNYFirst doesn't allow you to login if you use the URL directly.
     driver.get("https://www.google.com/")
@@ -28,7 +37,12 @@ def main():
     driver.find_element_by_id("submit").click()
 
     # Go to the Student Center.
-    driver.find_element_by_link_text("Student Center").click()
+    try:
+        driver.find_element_by_link_text("Student Center").click()
+    except NoSuchElementException:
+        print("Invalid username or password! Please double check your login information, and try again.")
+        driver.quit()
+        exit_routine()
 
     # Click on the Enrollment Shopping Cart Button.
     driver.switch_to.frame("TargetContent")
@@ -37,15 +51,14 @@ def main():
 
     shopping_cart_button.click()
 
-    # Returns the status of a given class, based on its class number.
+    # There are 2 cases: There either is a term selection table or there is not. Try to select a term, otherwise
+    # assume there is no term selection.
     try:
-        # TODO: CLICK ON TERM. after clicking the Enrollment Shopping Cart button it will show you a term selection (
-        #  ex: Spring 2021, Summer 2021). Other times, however, it will bring you directly to a single term if there
-        #  is only one applicable at the moment (for example, as of 1/31/2021 Spring 2021 is the only active term).
-        #  If term selection isn't available (no such element for term table), we can assume that there's only one
-        #  active term.
+        select_term(class_term, driver)
+        term_selection = True
         class_row, class_status_img_src = get_class_status(class_num, driver)
-    except NoSuchElementException:
+    except TimeoutError:
+        term_selection = False
         class_row, class_status_img_src = get_class_status(class_num, driver)
 
     while class_status_img_src == "https://cssa.cunyfirst.cuny.edu/cs/cnycsprd/cache850/PS_CS_STATUS_CLOSED_ICN_1.gif":
@@ -55,6 +68,10 @@ def main():
         # Refresh page and check status again.
         shopping_cart_tab = driver.find_element_by_link_text("shopping cart")
         shopping_cart_tab.click()
+
+        if term_selection:
+            select_term(class_term, driver)
+
         get_class_status(class_num, driver)
 
     if class_status_img_src == "https://cssa.cunyfirst.cuny.edu/cs/cnycsprd/cache850/PS_CS_STATUS_WAITLIST_ICN_1.gif":
@@ -64,23 +81,52 @@ def main():
         print("Class is open! Attempting to enroll.")
 
     enroll_in_class(class_row, driver)
-    time.sleep(3)
     driver.quit()
+    exit_routine()
 
 
-# Gets user input.
 def get_user_input():
     driver_path = input(
         "Enter the location of your chromedriver.exe. (ex: C:\\Users\\Bob\\Desktop\\chromedriver.exe)\n").strip()
+
     username = input(
         "Enter your CUNYFirst username (without the @login.cuny.edu, just the FirstName.LastNameNumber)\n").strip()
+
     password = input("Enter your CUNYFirst password\n").strip()
-    class_num = input("Enter the class number (ex: 45378)\n").strip()
-    class_term = input("Enter the class term (ex: Spring 2021 Term)\n").strip()
-    time_delay = input("Enter the time in seconds that you wish to wait in between class status checks (ex: Check if "
+    class_num = input("Enter the class number of the class you wish to enroll in (ex: 45378)\n").strip()
+    class_term = input("Enter the term of the class you wish to enroll in (ex: 2021 Spring Term or 2021 Summer Term)"
+                       "\n").strip()
+
+    time_delay = input("Enter the time in seconds that you wish to wait in between class status checks (Check if "
                        "class is open. If not, wait this many seconds and check again.)\n").strip()
 
+    print()
+
     return driver_path, username, password, class_num, class_term, time_delay
+
+
+def select_term(class_term, driver):
+    # Gets term table and continues to the shopping cart for a specific term.
+    term_table = WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.ID, "SSR_DUMMY_RECV1$scroll$0")))
+    all_term_rows = term_table.find_elements_by_css_selector('tr')
+    term_row = None
+
+    for cell in all_term_rows:
+        if class_term in cell.text:
+            term_row = cell
+
+    if term_row is None:
+        print("Invalid class term! Please make sure that your term input is in the following format: \"Year "
+              "TimeOfYear Term\" (ex: 2021 Fall Term) and try again.")
+        driver.quit()
+        exit_routine()
+
+    row_data = term_row.find_elements_by_css_selector('td')
+    circle_selector = row_data[0]
+    circle_selector.click()
+
+    continue_button = driver.find_element_by_id("DERIVED_SSS_SCT_SSR_PB_GO")
+    continue_button.click()
 
 
 # Check if class is open, closed, or has a wait list.
@@ -97,10 +143,10 @@ def get_class_status(class_num, driver):
             class_row = cell
 
     if class_row is None:
-        print("Class is not in shopping cart! Please add the class to your cart and try again.")
-        playsound(bell_path)
+        print("Class is not in your shopping cart, or you entered the wrong class number! Please ensure that the "
+              "class is in your shopping cart, and that you have the correct class number.")
         driver.quit()
-        sys.exit(1)
+        exit_routine()
 
     class_status_img = class_row.find_element_by_class_name("SSSIMAGECENTER")
     class_status_img_src = class_status_img.get_attribute("src")
@@ -130,15 +176,16 @@ def enroll_in_class(class_row, driver):
     all_enrollment_status_data = enrollment_status_row.find_elements_by_css_selector("td")
     enrollment_message = all_enrollment_status_data[1].text
 
-    enrollment_status_img = enrollment_status_row.find_element_by_class_name("SSSIMAGECENTER")
-    enrollment_status_img_src = enrollment_status_img.get_attribute("src")
+    print(enrollment_message + "\n")
 
-    if enrollment_status_img_src != "https://cssa.cunyfirst.cuny.edu/cs/cnycsprd/cache850" \
-                                    "/PS_CS_STATUS_SUCCESS_ICN_1.gif":
-        print("There was an error enrolling. Please see the CUNYFirst error message below and try again.\n")
 
-    print(enrollment_message)
-    playsound(bell_path)
+def exit_routine():
+    playsound(bell_path, block=False)
+    print("Press the \"Q\" key to quit.")
+
+    while True:
+        if keyboard.is_pressed("q"):
+            sys.exit(0)
 
 
 main()
