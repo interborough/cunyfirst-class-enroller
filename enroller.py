@@ -24,12 +24,8 @@ def main():
               "and try again.")
         exit_routine()
 
-    # Go to Google and search for CUNYFirst. CUNYFirst doesn't allow you to login if you use the URL directly.
-    driver.get("https://www.google.com/")
-    searchbar = driver.find_element_by_name("q")
-    searchbar.send_keys("CUNYfirst")
-    searchbar.submit()
-    driver.find_element_by_partial_link_text("CUNYfirst").click()
+    # Go to CUNYFirst.
+    driver.get("https://home.cunyfirst.cuny.edu/")
 
     # Enter username and password.
     driver.find_element_by_id("CUNYfirstUsernameH").send_keys(username)
