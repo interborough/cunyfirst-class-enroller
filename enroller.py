@@ -4,8 +4,11 @@ import keyboard
 
 from playsound import playsound
 
+from webdriver_manager.chrome import ChromeDriverManager
+
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException, WebDriverException
+from selenium.webdriver.chrome.service import Service
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
@@ -15,26 +18,20 @@ bell_path = "audio\\bell.mp3"
 
 def main():
     # Get user input.
-    driver_path, username, password, class_num, class_term, time_delay = get_user_input()
-
-    try:
-        driver = webdriver.Chrome(driver_path)
-    except WebDriverException:
-        print("Invalid Chromedriver.exe path! Please double check the location of your Chromedriver.exe, "
-              "and try again.")
-        exit_routine()
+    username, password, class_num, class_term, time_delay = get_user_input()
 
     # Go to CUNYFirst.
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
     driver.get("https://home.cunyfirst.cuny.edu/")
 
     # Enter username and password.
-    driver.find_element_by_id("CUNYfirstUsernameH").send_keys(username)
-    driver.find_element_by_id("CUNYfirstPassword").send_keys(password)
-    driver.find_element_by_id("submit").click()
+    driver.find_element(By.ID, "CUNYfirstUsernameH").send_keys(username)
+    driver.find_element(By.ID, "CUNYfirstPassword").send_keys(password)
+    driver.find_element(By.ID, "submit").click()
 
     # Go to the Student Center.
     try:
-        driver.find_element_by_link_text("Student Center").click()
+        driver.find_element(By.LINK_TEXT, "Student Center").click()
     except NoSuchElementException:
         print("Invalid username or password! Please double check your login information, and try again.")
         driver.quit()
@@ -62,7 +59,7 @@ def main():
         time.sleep(float(time_delay))
 
         # Refresh page and check status again.
-        shopping_cart_tab = driver.find_element_by_link_text("shopping cart")
+        shopping_cart_tab = driver.find_element(By.LINK_TEXT, "shopping cart")
         shopping_cart_tab.click()
 
         if term_selection:
@@ -82,15 +79,12 @@ def main():
 
 
 def get_user_input():
-    driver_path = input(
-        "Enter the location of your chromedriver.exe. (ex: C:\\Users\\Bob\\Desktop\\chromedriver.exe)\n").strip()
-
     username = input(
         "Enter your CUNYFirst username (without the @login.cuny.edu, just the FirstName.LastNameNumber)\n").strip()
 
     password = input("Enter your CUNYFirst password\n").strip()
     class_num = input("Enter the class number of the class you wish to enroll in (ex: 45378)\n").strip()
-    class_term = input("Enter the term of the class you wish to enroll in (ex: 2021 Spring Term or 2021 Summer Term)"
+    class_term = input("Enter the term of the class you wish to enroll in (ex: 2022 Spring Term or 2022 Summer Term)"
                        "\n").strip()
 
     time_delay = input("Enter the time in seconds that you wish to wait in between class status checks (Check if "
@@ -98,13 +92,13 @@ def get_user_input():
 
     print()
 
-    return driver_path, username, password, class_num, class_term, time_delay
+    return username, password, class_num, class_term, time_delay
 
 
 def select_term(class_term, driver):
     # Gets term table and continues to the shopping cart for a specific term.
     term_table = WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.ID, "SSR_DUMMY_RECV1$scroll$0")))
-    all_term_rows = term_table.find_elements_by_css_selector('tr')
+    all_term_rows = term_table.find_elements(By.CSS_SELECTOR, "tr")
     term_row = None
 
     for cell in all_term_rows:
@@ -117,11 +111,11 @@ def select_term(class_term, driver):
         driver.quit()
         exit_routine()
 
-    row_data = term_row.find_elements_by_css_selector('td')
+    row_data = term_row.find_elements(By.CSS_SELECTOR, "td")
     circle_selector = row_data[0]
     circle_selector.click()
 
-    continue_button = driver.find_element_by_id("DERIVED_SSS_SCT_SSR_PB_GO")
+    continue_button = driver.find_element(By.ID, "DERIVED_SSS_SCT_SSR_PB_GO")
     continue_button.click()
 
 
@@ -131,7 +125,7 @@ def get_class_status(class_num, driver):
     class_table = WebDriverWait(driver, 10) \
         .until(ec.presence_of_element_located((By.ID, "SSR_REGFORM_VW$scroll$0")))
 
-    all_class_rows = class_table.find_elements_by_css_selector('tr')
+    all_class_rows = class_table.find_elements(By.CSS_SELECTOR, "tr")
     class_row = None
 
     for cell in all_class_rows:
@@ -144,7 +138,7 @@ def get_class_status(class_num, driver):
         driver.quit()
         exit_routine()
 
-    class_status_img = class_row.find_element_by_class_name("SSSIMAGECENTER")
+    class_status_img = class_row.find_element(By.CLASS_NAME, "SSSIMAGECENTER")
     class_status_img_src = class_status_img.get_attribute("src")
 
     return class_row, class_status_img_src
@@ -153,9 +147,9 @@ def get_class_status(class_num, driver):
 # Try to enroll in the class.
 def enroll_in_class(class_row, driver):
     # Click checkbox, enroll button, and then submit button
-    class_row.find_element_by_class_name("PSCHECKBOX").click()
+    class_row.find_element(By.CLASS_NAME, "PSCHECKBOX").click()
 
-    enroll_button = driver.find_element_by_id("DERIVED_REGFRM1_LINK_ADD_ENRL")
+    enroll_button = driver.find_element(By.ID, "DERIVED_REGFRM1_LINK_ADD_ENRL")
     enroll_button.click()
 
     submit_button = WebDriverWait(driver, 10) \
@@ -166,10 +160,10 @@ def enroll_in_class(class_row, driver):
     enrollment_status_table = WebDriverWait(driver, 10) \
         .until(ec.presence_of_element_located((By.ID, "SSR_SS_ERD_ER$scroll$0")))
 
-    all_enrollment_status_rows = enrollment_status_table.find_elements_by_css_selector('tr')
+    all_enrollment_status_rows = enrollment_status_table.find_elements(By.CSS_SELECTOR, "tr")
     enrollment_status_row = all_enrollment_status_rows[1]
 
-    all_enrollment_status_data = enrollment_status_row.find_elements_by_css_selector("td")
+    all_enrollment_status_data = enrollment_status_row.find_elements(By.CSS_SELECTOR, "td")
     enrollment_message = all_enrollment_status_data[1].text
 
     print(enrollment_message + "\n")

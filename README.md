@@ -6,15 +6,15 @@ This script will check the status of a class (Open, Closed, or Wait Listed). If 
 I was only able to test this using Queens College's courses and using a Queens College CUNYFirst account, so I am not sure if it will work with other CUNY colleges. Seeing as the CUNYFirst system is used at all CUNY schools, however, there should be no issues using this script for other CUNY schools. 
 
 # Dependencies 
-For this program to function correctly you must have Python installed, along with the selenium, playsound, and keyboard libaries for Python. Additionally, you must install Google Chrome and ChromeDriver (for ChromeDriver, simply move the .exe to a path that you will remember in the future).   
+For this program to function correctly you must have Python installed, along with the selenium, webdriver-manager, playsound, and keyboard libaries for Python. Additionally, you must install Google Chrome.
 
 - Download Python: https://www.python.org/downloads/
 - Install selenium: `pip install selenium`
+- Install webdriver-manager: `pip install webdriver-manager`
 - Install playsound: `pip install playsound`
 - Install keyboard: `pip install keyboard`
 
 - Download Google Chrome: https://www.google.com/chrome/
-- Download ChromeDriver: https://chromedriver.chromium.org/
 
 # How to Use 
 - Download and install Python, along with the other relevant dependencies as outlined above. 
