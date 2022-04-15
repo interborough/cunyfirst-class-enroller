@@ -1,4 +1,6 @@
 # CUNYFirst Class Enroller
+**NOTE: THIS SCRIPT IS NOW OUTDATED AND LIKELY NO LONGER WORKS AS OF CUNYFIRST'S 9.2 UPDATE. THE USER INTERFACE HAS COMPLETELY CHANGED. I HAVE APPLIED FOR GRADUATION, AND AM THEREFORE UNABLE TO PROVIDE AN UPDATED VERSION.** 
+
 A Python script that automatically enrolls you into a class on CUNYFirst. 
 
 This script will check the status of a class (Open, Closed, or Wait Listed). If it is open or wait listed, the script will attempt to enroll you in the class. If the class is closed, the script will check every few seconds (you specify the exact amount of time between each check) to see if the status has changed. Once the script terminates (either having enrolled successfully or having encountered some sort of error) a sound effect of a bell ringing will play, letting you know that the program has taken some sort of action.
